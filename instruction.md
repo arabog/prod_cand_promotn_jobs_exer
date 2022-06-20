@@ -146,3 +146,62 @@ steps:
 Notice we are passing in the CIRCLE_WORKFLOW_ID in mybucket-${CIRCLE_WORKFLOW_ID:0:7} to help form the name of our new bucket. This helps us to reference the bucket later, in another job/command.
 
 Once this job runs successfully, it will change the cache in the CDN to the new index.html, which is also present here.
+
+Towards the end of this exercise, we need another job for deleting the S3 bucket created manually (cleaning up after promotion). For this purpose, you need to know which pipeline ID was responsible for creating the S3 bucket created manually (the last successful production release). We can query Cloudformation for the old pipeline ID information.
+Job - Write a CircleCI job named get_last_deployment_id that performs the query and saves the id to a file that we can persist to the workspace. For convenience, here's the job that you can use:
+# Fetch and save the pipeline ID (bucket ID) responsible for the last release.
+get_last_deployment_id:
+  docker:
+    - image: amazon/aws-cli
+  steps:
+    - checkout
+    - run: yum install -y tar gzip
+    - run:
+        name: Fetch and save the old pipeline ID (bucket name) responsible for the last release.
+        command: |
+          aws cloudformation \
+          list-exports --query "Exports[?Name==\`PipelineID\`].Value" \
+          --no-paginate --output text > ~/textfile.txt
+    - persist_to_workspace:
+        root: ~/
+        paths: 
+          - textfile.txt 
+
+In the job above, we are saving the bucket ID to a file and persist the file to the workspace for other jobs to access.
+
+Job - Write a job named promote_to_production that executes our cloudfront.yml CloudFormation template used in the manual steps. Here's the job you can use:
+# Executes the cloudfront.yml template that will modify the existing CloudFront Distribution, change its target from the old bucket to the new bucket - `mybucket-${CIRCLE_WORKFLOW_ID:0:7}`. 
+# Notice here we use the stack name `production-distro` which is the same name we used while deploying to the S3 bucket manually.
+promote_to_production:
+  docker:
+    - image: amazon/aws-cli
+  steps:
+    - checkout
+    - run:
+        name: Execute cloudfront.yml
+        command: |
+          aws cloudformation deploy \
+          --template-file cloudfront.yml \
+          --stack-name production-distro \
+          --parameter-overrides PipelineID="mybucket-${CIRCLE_WORKFLOW_ID:0:7}"
+Notice here we use the stack name production-distro which is the same name we used in the throw-away Cloudformation template above.
+
+Job - Write a Job Named clean_up_old_front_end that uses the pipeline ID to destroy the previous production version's S3 bucket and CloudFormation stack. To achieve this, you need to retrieve from the workspace the file where the previous Pipeline ID was stored. Once you have the Pipeline ID, use the following commands to clean up:
+# Destroy the previous production version's S3 bucket and CloudFormation stack. 
+clean_up_old_front_end:
+  docker:
+    - image: amazon/aws-cli
+  steps:
+    - checkout
+    - run: yum install -y tar gzip
+    - attach_workspace:
+        at: ~/
+    - run:
+        name: Destroy the previous S3 bucket and CloudFormation stack. 
+        # Use $OldBucketID environment variable or mybucket644752792305 below.
+        # Similarly, you can create and use $OldStackID environment variable in place of production-distro 
+        command: |
+          export OldBucketID=$(cat ~/textfile.txt)
+          aws s3 rm "s3://${OldBucketID}" --recursive
+          
+Workflow - Define a Workflow that puts these jobs in order. Comment out the jobs that are not part of this exercise. Try to keep the workflow minimal. Your workflow will look as:
