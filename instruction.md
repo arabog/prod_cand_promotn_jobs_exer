@@ -217,7 +217,7 @@ workflows:
       - download_file:
           requires:
             - upload_file -->
-            
+
       - create_infrastructure
       - configure_infrastructure
       - create_and_deploy_front_end
@@ -231,3 +231,11 @@ workflows:
             - promote_to_production
 
 Push your code to the Github repo, and it will trigger the CircleCI build pipeline. 
+
+Step 5. Verify after upto 30 mins
+Verify version 2 is browsable using Cloudfront domain name. Note that the AWS Cloudfront takes upto 30 mins to create caches and show the updated web page.
+
+In some cases, depending upon your geographical location, it may take upto 24 hours to update the Cloudfront CDN. See an excerpt from here.
+By default, CloudFront caches a response from Amazon S3 for 24 hours (Default TTL of 86,400 seconds). If your request lands at an edge location that served the Amazon S3 response within 24 hours, then CloudFront uses the cached response even if you updated the content in Amazon S3.
+
+Clean up after the verification. Delete the cloudformation stack and the S3 bucket(s).
