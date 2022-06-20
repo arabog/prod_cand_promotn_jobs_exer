@@ -203,5 +203,31 @@ clean_up_old_front_end:
         command: |
           export OldBucketID=$(cat ~/textfile.txt)
           aws s3 rm "s3://${OldBucketID}" --recursive
-          
+
 Workflow - Define a Workflow that puts these jobs in order. Comment out the jobs that are not part of this exercise. Try to keep the workflow minimal. Your workflow will look as:
+
+workflows:
+  # Name the workflow "welcome"
+  my_workflow:
+    # Run the welcome/run job in its own container
+    jobs:
+      # - welcome/run
+      <!-- - print_greetings
+      - upload_file
+      - download_file:
+          requires:
+            - upload_file -->
+            
+      - create_infrastructure
+      - configure_infrastructure
+      - create_and_deploy_front_end
+      - promote_to_production:
+          requires: 
+            - create_and_deploy_front_end
+      - get_last_deployment_id
+      - clean_up_old_front_end:
+          requires:
+            - get_last_deployment_id
+            - promote_to_production
+
+Push your code to the Github repo, and it will trigger the CircleCI build pipeline. 
