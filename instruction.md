@@ -26,6 +26,22 @@ Create a simple HTML page (version 1) and name it index.html. It could be as sim
   </body>
 </html>
 
+S3 bucket template:
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "PublicReadGetObject",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::bucketname/*"
+        }
+    ]
+}
+
+https://docs.aws.amazon.com/AmazonS3/latest/userguide/HostingWebsiteOnS3Setup.html
+
 Step 2. Create a Cloudformation Stack (Manually)
 Use a Cloudformation template to create a Cloudfront Distribution, and later in this exercise, use the same template to modify the Cloudfront distribution.
 
@@ -78,6 +94,11 @@ aws cloudformation deploy \
 --stack-name production-distro \
 --parameter-overrides PipelineID="${S3_BUCKET_NAME}" \ # Name of the S3 bucket you created manually.
 --tags project=udapeople &
+
+
+E.g:
+
+aws cloudformation deploy --template-file cloudfront.yml --stack-name production-distro --parameter-overrides PipelineID="myawsbuckethugb" --tags project=udapeople &
 
 In the command above, replace ${S3_BUCKET_NAME} with the actual name of your bucket (e.g., mybucket644752792305). Also, note down the stack name - production-distro for the future. You will need the cloudfront.yml file in the automation steps later again.
 
@@ -239,3 +260,18 @@ In some cases, depending upon your geographical location, it may take upto 24 ho
 By default, CloudFront caches a response from Amazon S3 for 24 hours (Default TTL of 86,400 seconds). If your request lands at an edge location that served the Amazon S3 response within 24 hours, then CloudFront uses the cached response even if you updated the content in Amazon S3.
 
 Clean up after the verification. Delete the cloudformation stack and the S3 bucket(s).
+
+To Recap, You Were Able To...
+Learn what Configuration Management Tools are and How to Use Them
+Design an Ansible Playbook
+Control a Remote Machine with an Ansible Playbook
+Build an Ansible Inventory File
+Make Various Types of CD Jobs in our CI/CD Pipeline
+Create Infrastructure
+Configure Infrastructure
+Deploy Production Artifacts
+Smoke Testing
+Rollback
+Promoting to Production
+
+That was quite a journey. We really covered a lot of ground in a short amount of time, but I hope the practice we did helped to solidify the new knowledge.

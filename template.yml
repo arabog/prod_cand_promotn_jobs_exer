@@ -1,0 +1,39 @@
+# Exercise - Rollback
+AWSTemplateFormatVersion: 2010-09-09
+
+
+Description: infrastructure creation job
+
+
+Resources:
+
+
+  EC2Instance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      SecurityGroups:
+        - !Ref InstanceSecurityGroup
+      # Change this, as applicable to you      
+      KeyName: ansible2
+      # Change this, as applicable to you
+      # You may need to find out what instance types are available in your region - use https://cloud-images.ubuntu.com/locator/ec2/
+      ImageId: 'ami-09e67e426f25ce0d7' 
+      InstanceType: t3.micro
+      Tags:
+        - Key: "Project"
+          Value: "udacity"
+
+  InstanceSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: 0.0.0.0/0 
+
+        - IpProtocol: tcp
+          FromPort: '3000'
+          ToPort: '3000'
+          CidrIp: 0.0.0.0/0 
